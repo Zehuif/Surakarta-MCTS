@@ -91,6 +91,43 @@ class Node(object):
                 selected = i
                 best_value = uct
         return selected
+    
+    def selectEpsilon(self, epsilon=0.1):
+        if random.random() < epsilon:
+            # Con probabilidad ε, seleccionamos una acción al azar.
+            selected = random.choice(self.__children)
+        else:
+            # Con probabilidad 1-ε, seleccionamos la acción que actualmente parece ser la mejor.
+            selected = None
+            best_value = -1.0
+            for i in self.__children:
+                uct = i.__won_game / (i.__total_game + float_info.epsilon)
+                uct += math.sqrt(math.log(self.__total_game + 1)
+                                / (i.__total_game + float_info.epsilon))
+                if uct > best_value:
+                    selected = i
+                    best_value = uct
+        return selected
+        
+
+    def selectTemperature(self, temperature=1.0):
+        uct_values = []
+        for i in self.__children:
+            uct = i.__won_game / (i.__total_game + 1.0)
+            uct += math.sqrt(math.log(self.__total_game + 1)
+                            / (i.__total_game + 1.0))
+            uct_values.append(uct)
+
+        # Convertimos los valores UCT a probabilidades usando una función softmax
+        uct_values = np.array(uct_values)
+        uct_values -= np.max(uct_values)
+        probs = np.exp(uct_values / temperature)
+        probs /= np.sum(probs)
+        
+        # Seleccionamos un hijo basado en las probabilidades
+        selected = np.random.choice(self.__children, p=probs)
+
+        return selected
 
     def expand(self, breadth=3):
         if self.__status.won:
