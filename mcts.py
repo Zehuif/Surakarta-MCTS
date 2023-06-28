@@ -1,5 +1,6 @@
 import math
 import random
+import numpy as np
 import simulator
 import status
 from sys import float_info
@@ -34,13 +35,14 @@ class Node(object):
     def win_prob(self):
         return self.__won_game / self.__total_game \
             if self.__total_game else 0
-
+            
+   
     def search(self, depth=20, breadth=3):
         target = status.get_won_status(self.__status.status)
         for _ in range(depth):
             node = self
             while node.__children:
-                node = node.select()
+                node = node.select_stochastic()
             if node is self or node.__total_game:
                 child = node.expand(breadth)
             else:
@@ -51,6 +53,21 @@ class Node(object):
             else:
                 node.update(None)
         return self.__find_best_node(self.__children).__action
+
+    def select_stochastic(self, seed=0):
+        total_visits = sum(child.__total_game for child in self.__children)
+        np.random.seed(seed)
+        seed = random.random() * total_visits
+        total_visits = 0
+        exploration_factor = np.sqrt(np.log(total_visits) / sum(child.__total_game for child in self.__children))
+        return random.choice([child for child in self.__children if child.__total_game > 0 and (total_visits := total_visits + child.__total_game) > seed])
+        # total_visits = sum(child.__visits for child in self.__children)
+        # exploration_factor = np.sqrt(np.log(total_visits) / sum(child.__visits for child in self.__children))
+        # scores = [(child.__wins / child.__visits) + exploration_factor * np.sqrt(np.log(total_visits) / child.__visits)
+        #         for child in self.__children]
+        # max_score = max(scores)
+        # best_children = [child for child, score in zip(self.__children, scores) if score == max_score]
+        # return random.choice(best_children)
 
     def print_tree(self, tab=0):
         tab_str = '| ' * (tab - 1) + ('+-' if tab else '')

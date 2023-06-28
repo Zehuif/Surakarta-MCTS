@@ -86,9 +86,9 @@ if __name__ == '__main__':
     # initialize parser
     parser = argparse.ArgumentParser(prog='Surakarta MCTS AI')
     parser.formatter_class = argparse.RawTextHelpFormatter
-    parser.description = 'An artificial intelligence program that\n' + \
-        'can play Surakarta chess implemented by MCTS algorithm.\n' + \
-        'Written by MaxXing'
+    # parser.description = 'An artificial intelligence program that\n' + \
+    #     'can play Surakarta chess implemented by MCTS algorithm.\n' + \
+    #     'Written by Ze Hui'
     parser.add_argument('-o', '--output', default=None, type=str,
                         help='output the action that AI took to file')
     parser.add_argument('-af', '--aifirst', default=0, type=int,
