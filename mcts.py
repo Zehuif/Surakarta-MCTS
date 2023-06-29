@@ -54,20 +54,34 @@ class Node(object):
                 node.update(None)
         return self.__find_best_node(self.__children).__action
 
+    def selectSeed(self, seed=100):
+        random.seed(seed)
+        selected = None
+        best_value = -1.0
+        for i in self.__children:
+            uct = i.__won_game / (i.__total_game + float_info.epsilon)
+            uct += math.sqrt(math.log(self.__total_game + 1)
+                            / (i.__total_game + float_info.epsilon))
+            exploration_factor = math.sqrt(math.log(self.__total_game + 1) / (i.__total_game + float_info.epsilon))
+            uct += random.random() * exploration_factor
+            if uct > best_value:
+                selected = i
+                best_value = uct
+        return selected
+    
     def select_stochastic(self, seed=0):
         total_visits = sum(child.__total_game for child in self.__children)
-        np.random.seed(seed)
-        seed = random.random() * total_visits
-        total_visits = 0
-        exploration_factor = np.sqrt(np.log(total_visits) / sum(child.__total_game for child in self.__children))
-        return random.choice([child for child in self.__children if child.__total_game > 0 and (total_visits := total_visits + child.__total_game) > seed])
-        # total_visits = sum(child.__visits for child in self.__children)
-        # exploration_factor = np.sqrt(np.log(total_visits) / sum(child.__visits for child in self.__children))
-        # scores = [(child.__wins / child.__visits) + exploration_factor * np.sqrt(np.log(total_visits) / child.__visits)
-        #         for child in self.__children]
-        # max_score = max(scores)
-        # best_children = [child for child, score in zip(self.__children, scores) if score == max_score]
-        # return random.choice(best_children)
+        np.random.seed(1)
+        exploration_factor = math.sqrt(math.log(total_visits) / sum(child.__total_game for child in self.__children))
+        ucb_values = []
+        for child in self.__children:
+            if child.__total_game == 0:
+                ucb_values.append(1)
+            else:
+                ucb_values.append(child.__won_game / child.__total_game + exploration_factor)
+        if np.array(ucb_values) / sum(ucb_values) is np.nan:
+            return np.random.choice(self.__children)
+        return np.random.choice(self.__children, p=np.array(ucb_values) / sum(ucb_values))
 
     def print_tree(self, tab=0):
         tab_str = '| ' * (tab - 1) + ('+-' if tab else '')
