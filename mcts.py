@@ -71,7 +71,7 @@ class Node(object):
     
     def select_stochastic(self, seed=0):
         total_visits = sum(child.__total_game for child in self.__children)
-        np.random.seed(1)
+        np.random.seed(3)
         exploration_factor = math.sqrt(math.log(total_visits) / sum(child.__total_game for child in self.__children))
         ucb_values = []
         for child in self.__children:
@@ -79,9 +79,15 @@ class Node(object):
                 ucb_values.append(1)
             else:
                 ucb_values.append(child.__won_game / child.__total_game + exploration_factor)
-        if np.array(ucb_values) / sum(ucb_values) is np.nan:
+        
+        # Verificar si hay NaN en las probabilidades
+        if np.isnan(np.array(ucb_values)).any():
             return np.random.choice(self.__children)
-        return np.random.choice(self.__children, p=np.array(ucb_values) / sum(ucb_values))
+        
+        try:
+            return np.random.choice(self.__children, p=np.array(ucb_values) / sum(ucb_values))
+        except ValueError:
+            return np.random.choice(self.__children)
 
     def print_tree(self, tab=0):
         tab_str = '| ' * (tab - 1) + ('+-' if tab else '')
